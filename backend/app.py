@@ -60,21 +60,58 @@ ducks =  [
 def index():
     return "ducks backend"
 
-@app.get("/ducks")
+@app.get("/ducks/")
 def get_ducks():
-    return ducks, 200
+    #list of duck python objects
+    ducks = Duck.query.all()
+    #[duck1.to_dic(), duck2.to_dic()]
+    return [d.to_dict() for d in ducks], 200
 
 @app.patch("/ducks/<int:id>")
 def patch_ducks(id):
-    return {}
+    data = request.json
+    duck = db.session.get(Duck, id)
+    # if 'likes' in data:
+    #     duck.likes = data['likes']
+    # if 'name' in data:
+    #     duck.name = data['name']
+    # if 'img_url' in data:
+    #     duck.imge_url = data['imge_url']
+    '''
+    data = {"likes": 4}
+    key = "likes"
+    setattr(duck, 'likes', data['likes'])
+    setattr(duck, 'likes', 4)
+
+    setattr(duck, "name", data["name"])
+    setattr(duck, "name", "new name")
+    '''
+
+    for key in data:
+        setattr(duck, key, data[key])
+
+    db.session.add(duck)
+    db.session.commit()
+    return duck.to_dict(), 201
 
 @app.post("/ducks")
 def post_ducks():
+    data = request.json
+    # data.get(...) vs data[...]
+    duck = Duck(name=data.get("name"), img_url=data.get("img_url"), likes=data.get("likes"))
+    db.session.add(duck)
+    db.session.commit()
     return {}
 
 @app.delete("/ducks/<int:id>")
 def delete_duck(id):
-    return
+    #duck = Duck.query.filter(Duck.id == id).first()
+    duck = db.session.get(Duck, id)
+    if not duck:
+        return {"error": "duck not found"}, 404
+    db.session.delete(duck)
+    db.session.commit()
+    return duck.to_dict(), 201
 
 
 
